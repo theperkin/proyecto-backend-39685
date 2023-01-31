@@ -1,42 +1,86 @@
-class ProductManager {//clase y constructor
-    constructor() {
-        this.products = []
+import { promises as fs } from 'fs'
+
+class ProductManager {
+    constructor(path) {
+        this.path = path
     }
 
-    addProduct(newProduct) {//Metodo addProduct
-        const newProductValues = Object.values(newProduct);
-        if (newProductValues.includes("") || newProductValues.includes(null)) {
-            console.error("Completar datos.")
+    async addProduct(newProduct) {
+        if (Object.values(newProduct).includes("") || Object.values(newProduct).includes(null)) {
+            console.error("Error 1: Verifique campos.");
+
         } else {
-            const product = this.products.find(prod => prod.code === newProduct.code);
+            const dataBase = await fs.readFile(this.path, 'utf-8');
+            const aux = JSON.parse(dataBase);
+            const product = aux.find(prod => prod.code === newProduct.code);
+
             if (!product) {
-                const newID = ProductManager.idGenerator()
-                this.products.push({ ...newProduct, id: newID });
+                aux.push({ ...newProduct, id: ProductManager.idGenerator() });
+                await fs.writeFile(this.path, JSON.stringify(aux))
+
             } else {
-                console.error("Producto duplicado.");
+                console.error("Error 2: El producto esta repetido");
             }
         }
     }
 
-    getProducts() {
-        return this.products;
+    async getProducts() {
+        const dataBase = await fs.readFile(this.path, 'utf-8');
+        const aux = JSON.parse(dataBase);
+        console.log(aux);
     }
-    getProductByID(idProduct) {
-        const product = this.products.find(prod => prod.id === idProduct);
+
+
+    async getProductByID(idProduct) {
+        const dataBase = await fs.readFile(this.path, 'utf-8');
+        const aux = JSON.parse(dataBase);
+        const product = aux.find(prod => prod.id === idProduct);
         if (product) {
-            return product;
+            console.log(product);
         } else {
-            return "Not found.";
+            console.error("Error 3: Producto no encontrado");
         }
     }
 
-    static idGenerator() {//Generador de ID estatico
-        this.generatedID ? this.generatedID++ : (this.generatedID = 1);
+    async updateProduct(newProduct, idProduct) {
+        if (Object.values(newProduct).includes("") || Object.values(newProduct).includes(null)) {
+            console.error("Error 1: Verifique campos.")
+
+        } else {
+            const dataBase = await fs.readFile(this.path, 'utf-8');
+            const aux = JSON.parse(dataBase);
+            const product = aux.find(prod => prod.id === idProduct);
+            if (product) {
+                const indice = aux.findIndex(prod => prod.id === idProduct);
+                aux[indice] = { ...newProduct, id: idProduct };
+                await fs.writeFile(this.path, JSON.stringify(aux));
+                console.log(`El producto (id:${idProduct}) ha sido actualizado`);
+            } else {
+                console.log("Error 3: Producto no encontrado");
+            }
+        }
+    }
+
+    async deleteProduct(idProduct) {
+        const dataBase = await fs.readFile(this.path, 'utf-8');
+        const aux = JSON.parse(dataBase);
+        const product = aux.find(prod => prod.id === idProduct);
+        if (product) {
+            const newArray = aux.filter(prod => prod.id !== idProduct)
+            await fs.writeFile(this.path, JSON.stringify(newArray));
+            console.log(`El producto (id:${idProduct}) ha sido eliminado`);
+        } else {
+            console.log("Error 3: Producto no encontrado");
+        }
+    }
+
+    static idGenerator() {
+        this.generatedID ? this.generatedID++ : this.generatedID = 1;
         return this.generatedID;
     }
 }
 
-class Product {//Propiedades de productos
+class Product {
     constructor(title, description, price, thumbnail, code, stock) {
         this.title = title
         this.description = description
@@ -46,3 +90,40 @@ class Product {//Propiedades de productos
         this.stock = stock
     }
 }
+
+// Creacion del Manager y los productos
+
+const manager1 = new ProductManager("./data.json");
+
+const product1 = new Product("Producto prueba", "Este es un producto de prueba", 200, "Sin Imagen", "abc123", 25);
+const product2 = new Product("Producto prueba 2", "Este es el segundo producto de prueba", 500, "Sin Imagen", "abc456", 25);
+
+
+const product1Update = new Product("Producto prueba actualizado", "Este es el producto 1 actualizado", 400, "Sin Imagen", "abc123", 25);
+
+// TESTEO
+
+const test = async () => {
+    await fs.writeFile("./data.json", "[]") //Iniciar base de datos con array vacio (archivo de texto)
+
+    await manager1.getProducts(); //Muestra por consola el array vacio
+
+    //Productos cargados
+    await manager1.addProduct(product1);
+    await manager1.addProduct(product2);
+
+    await manager1.getProducts(); //Muestra por consola los productos cargados
+
+    await manager1.getProductByID(2); //Producto encontrado (mostrado por consola)
+    await manager1.getProductByID(5); //Producto no encontrado (error por consola)
+
+    await manager1.updateProduct(product1Update, 1) //Actualiza el producto id:1 con los nuevos campos
+    await manager1.getProductByID(1); //Muestra por consola el producto actualizado
+
+    await manager1.deleteProduct(6); //No encuentra el producto para eliminar (error por consola)
+    await manager1.deleteProduct(2); //Elimina el producto 2
+
+    await manager1.getProducts(); //Muestra el array por consola con solo el producto 1 actualizado
+}
+
+test();
