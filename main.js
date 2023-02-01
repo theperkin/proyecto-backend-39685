@@ -1,5 +1,4 @@
 import { promises as fs } from 'fs'
-
 class ProductManager {
     constructor(path) {
         this.path = path
@@ -91,39 +90,37 @@ class Product {
     }
 }
 
-// Creacion del Manager y los productos
+// Creacion Manager y productos
 
 const manager1 = new ProductManager("./data.json");
 
-const product1 = new Product("Producto prueba", "Este es un producto de prueba", 200, "Sin Imagen", "abc123", 25);
-const product2 = new Product("Producto prueba 2", "Este es el segundo producto de prueba", 500, "Sin Imagen", "abc456", 25);
+const product1 = new Product("Producto prueba", "Producto prueba 1", 100, "Img", "12345", 10);
+const product2 = new Product("Producto prueba 2", "Producto prueba 2", 200, "Img", "67890", 15);
 
+const product1Update = new Product("Producto prueba actualizado", "Producto 1 actualizado", 300, "Img", "3112", 20);
 
-const product1Update = new Product("Producto prueba actualizado", "Este es el producto 1 actualizado", 400, "Sin Imagen", "abc123", 25);
-
-// TESTEO
+// TEST
 
 const test = async () => {
-    await fs.writeFile("./data.json", "[]") //Iniciar base de datos con array vacio (archivo de texto)
+    await fs.writeFile("./data.json", "[]")
 
-    await manager1.getProducts(); //Muestra por consola el array vacio
+    await manager1.getProducts();
 
-    //Productos cargados
     await manager1.addProduct(product1);
     await manager1.addProduct(product2);
 
-    await manager1.getProducts(); //Muestra por consola los productos cargados
+    await manager1.getProducts();
 
-    await manager1.getProductByID(2); //Producto encontrado (mostrado por consola)
-    await manager1.getProductByID(5); //Producto no encontrado (error por consola)
+    await manager1.getProductByID(2);
+    await manager1.getProductByID(5);
 
-    await manager1.updateProduct(product1Update, 1) //Actualiza el producto id:1 con los nuevos campos
-    await manager1.getProductByID(1); //Muestra por consola el producto actualizado
+    await manager1.updateProduct(product1Update, 1)
+    await manager1.getProductByID(1);
 
-    await manager1.deleteProduct(6); //No encuentra el producto para eliminar (error por consola)
-    await manager1.deleteProduct(2); //Elimina el producto 2
+    await manager1.deleteProduct(6);
+    await manager1.deleteProduct(2);
 
-    await manager1.getProducts(); //Muestra el array por consola con solo el producto 1 actualizado
+    await manager1.getProducts();
 }
 
 test();
